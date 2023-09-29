@@ -1,0 +1,32 @@
+        palettes:
+          - name: menu_palette
+            fixed-entries:
+              - image: gfx/menu_palette.png
+            images:
+              - gfx/menu_palette.png
+        converts:
+          - name: menu_gfx
+            palette: menu_palette
+            transparent-color-index: 7
+            images:
+              - gfx/face_0_easy.png
+              - gfx/face_1_normal.png
+              - gfx/face_2_hard.png
+              - gfx/face_3_harder.png
+              - gfx/face_4_insane.png
+              - gfx/face_5_easy_demon.png
+              - gfx/face_6_medium_demon.png
+              - gfx/face_7_hard_demon.png
+              - gfx/face_8_harder_demon.png
+              - gfx/face_9_extreme_demon.png
+              - gfx/face_10_unrated.png
+              - gfx/face_11_auto.png
+
+        outputs:
+          - type: asm
+            #palettes:
+              #- menu_palette
+            converts:
+              - menu_gfx
+            directory: gfx
+            include-file: gfx/face.inc
