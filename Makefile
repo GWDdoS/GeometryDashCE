@@ -1,18 +1,12 @@
-WINE=wine64
+SPASM=tools/spasm64
+ZIP=zip
+BINARIES := $(wildcard bin/*.8x[pv])
 
-spasm:
-	$(WINE) spasm64.exe -E -L src/dash.asm bin/AGD.8xp
+build:
+	$(SPASM) -E src/GD.z80 bin/AGD.8xp
 
-send:
-	sudo tilp -n -s bin/AGD.8xp
-
-all:
-	$(WINE) spasm64.exe -E -L src/dash.asm bin/AGD.8xp
-	sudo tilp -n -s bin/AGD.8xp
-
-sendall:
-	sudo tilp -n -s bin/AGD.8xp levels/*.8xv ./*.8xv
-
-release:
-	rm GeometryDash.zip
-	zip -r GeometryDash.zip bin/* include/* levels/* src/* *.8xp *.8xv *.png LISEZMOI.txt README.md 
+release: 
+	rm -f GeometryDash.zip
+	cp $(BINARIES) .
+	$(ZIP) -r GeometryDash.zip include/ levels/ images/ src/ *.8x[vp] README.md
+	rm -f $(subst bin/,,$(BINARIES))

@@ -613,10 +613,10 @@ endNEW_dispTiles:
 	; ************************
 	; Square
 	;	makes the sprite jump
-	bit FLG_rvrsGravity, (iy+asm_flag1)
-	jp nz,RVRS_gravity
 	bit FLG_spaceshipOn, (iy+asm_flag1)
 	jp nz,SPCSHP_mode
+	bit FLG_rvrsGravity, (iy+asm_flag1)
+	jp nz,RVRS_gravity
 	jp NORM_gravity
 
 dispCharacter:
@@ -1354,22 +1354,22 @@ NORM_noVerticalScroll:
 	add hl,de
 	ld a,(hl)
 	cp 07Eh ; yellow
-	jr c,NORM_jmpTile_jumping
+	jp c,NORM_jmpTile_jumping
 	ld de,10
 	add hl,de
 	ld a,(hl)
 	cp 07Eh ; yellow
-	jr c,NORM_jmpTile_jumping
+	jp c,NORM_jmpTile_jumping
 	ld de,10
 	add hl,de
 	ld a,(hl)
 	cp 07Eh
-	jr c,NORM_jmpTile_jumping
+	jp c,NORM_jmpTile_jumping
 	ld de,(320*10)-20 ; bottom left hand corner
 	add hl,de
 	ld a,(hl)
 	cp 07Eh ; yellow
-	jr c,NORM_jmpTile_jumping
+	jp c,NORM_jmpTile_jumping
 	ld de,10
 	add hl,de
 	ld a,(hl)
@@ -1379,17 +1379,72 @@ NORM_noVerticalScroll:
 	add hl,de
 	ld a,(hl)
 	cp 07Eh
+	;jr c, NORM_jmpTile_jumping
+
+	; reverse jump tile? (Needs an actual tile but here's the code)
+	;pop hl
+	;push hl
+	;ld de,beg_sprite+(320*9)+1 ; bottom left hand corner
+	;add hl,de
+	;ld a,(hl)
+	;cp 003h ; blue color
+	;jr c,NORM_jmpTile_reverse_jumping
+	;ld de,10
+	;add hl,de
+	;ld a,(hl)
+	;cp 003h
+	;jr c,NORM_jmpTile_reverse_jumping
+	;ld de,10
+	;add hl,de
+	;ld a,(hl)
+	;cp 003h 
+	;jr c,NORM_jmpTile_reverse_jumping
+	;ld de,(320*10)-20 ; bottom left hand corner
+	;add hl,de
+	;ld a,(hl)
+	;cp 003h
+	;jr c,NORM_jmpTile_reverse_jumping
+	;ld de,10
+	;add hl,de
+	;ld a,(hl)
+	;cp 003h
+	;jr c,NORM_jmpTile_reverse_jumping
+	;ld de,10
+	;add hl,de
+	;ld a,(hl)
+	;cp 003h
 	jr nc,NORM_noJmpTile_jumping
+;NORM_jmpTile_reverse_jumping:
+;	cp 7Ah
+;	jr c,NORM_noJmpTile_jumping
+;	
+;	ld a,($F50012)
+;	bit 5, a
+;	jr z,NORM_noJmpTile_jumping
+;	bit FLG_jmpUsed, (iy+asm_flag2)
+;	jr nz,NORM_noJmpTile_jumping
+;
+;	res FLG_jmpAgain, (iy+asm_flag1)
+;	set FLG_jumping, (iy+asm_flag1)
+;	set FLG_jmpUsed, (iy+asm_flag2)
+;	set FLG_rvrsGravity, (iy+asm_flag1)
+;	ld hl,jmpSpeedLUT
+;	ld (jmp_speed),hl
+;	ld hl,0
+;	ld (mn),hl
+;	set FLG_topReached, (iy+asm_flag1)
+;	pop hl
+;	jp dispCharacter
+
 NORM_jmpTile_jumping:
 	cp 7Ah
 	jr c,NORM_noJmpTile_jumping
-	
+
 	ld a,($F50012)
 	bit 5, a
 	jr z,NORM_noJmpTile_jumping
 	bit FLG_jmpUsed, (iy+asm_flag2)
 	jr nz,NORM_noJmpTile_jumping
-
 	res FLG_jmpAgain, (iy+asm_flag1)
 	set FLG_jumping, (iy+asm_flag1)
 	set FLG_jmpUsed, (iy+asm_flag2)
@@ -3003,6 +3058,9 @@ SPCSHP_mode:
 	ld de,(jmp_speed)
 	bit FLG_jumping, (iy+asm_flag1)
 	jp nz,SPCSHP_jmping
+	bit FLG_rvrsGravity, (iy+asm_flag1)
+	jr nz, SPCSHP_mode_reverse
+SPCSHP_mode_normal:
 	ld hl,spcshpSpeedLUT_end
 	or a
 	sbc hl,de
@@ -3010,6 +3068,16 @@ SPCSHP_mode:
 	inc de
 	inc de
 	inc de
+	ld (jmp_speed),de
+	jr SPCSHP_suit
+SPCSHP_mode_reverse:
+	ld hl,spcshpSpeedLUT_beg
+	or a
+	sbc hl,de
+	jr nc,SPCSHP_suit
+	dec de
+	dec de
+	dec de
 	ld (jmp_speed),de
 SPCSHP_suit:
 
@@ -3130,6 +3198,8 @@ SPCSHP_touchedDown_adjustPosition_loop:
 	
 	
 SPCSHP_jmping:
+	bit FLG_rvrsGravity, (iy+asm_flag1)
+	jr nz, SPCSHP_jmping_reverse
 	ld hl,spcshpSpeedLUT_beg
 	or a
 	sbc hl,de
@@ -3147,10 +3217,31 @@ SPCSHP_jmping:
 	dec de
 	ld (jmp_speed),de
 	jp SPCSHP_suit
+SPCSHP_jmping_reverse:
+	ld hl,spcshpSpeedLUT_end
+	or a
+	sbc hl,de
+	jp z,SPCSHP_suit
+	inc de
+	inc de
+	inc de
+	ld (jmp_speed),de
+	ld hl,spcshpSpeedLUT_end
+	or a
+	sbc hl,de
+	jp z,SPCSHP_suit
+	inc de
+	inc de
+	inc de
+	ld (jmp_speed),de
+	jp SPCSHP_suit
 
 SPCSHP_up:
 	set FLG_jumping, (iy+asm_flag1)
-	ld de,(spr_state)
+	bit FLG_rvrsGravity, (iy+asm_flag1) ; tilt the other way in reverse gravity
+	jr nz, SPCSHP_down_after_check
+SPCSHP_up_after_check:
+	ld de,(spr_state) ; are we out of tiles for the spaceship?
 	ld hl,_spaceship_tiles_end-6
 	or a
 	sbc hl,de
@@ -3165,6 +3256,9 @@ SPCSHP_up_lastState:
 
 SPCSHP_down:
 	res FLG_jumping, (iy+asm_flag1)
+	bit FLG_rvrsGravity, (iy+asm_flag1)
+	jr nz, SPCSHP_up_after_check
+SPCSHP_down_after_check:
 	ld de,(spr_state)
 	ld hl,_spaceship_tiles_beg+6
 	or a
@@ -3237,7 +3331,17 @@ dieHard:
 	pop hl
 	jr crashed
 die:
-	; If jumping tile
+	; chain/bounce collisions
+	cp 52
+	jp z, dispCharacter
+	cp 23
+	jp z, dispCharacter
+	cp 61
+	jp z, dispCharacter
+	cp 62
+	jp z, dispCharacter
+	cp 127
+	jp z, dispCharacter
 	cp $FA
 	jp nc,dispCharacter
 	cp $7A
